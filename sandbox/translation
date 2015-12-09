@@ -1,0 +1,17 @@
+{
+    'Poř.': 'Number',
+    'Jméno': 'Name',
+    'Tým': 'Team',
+    'P': 'Role',
+    'Z': 'Matches',
+    'G': 'Percent of goals',
+    'CPS': 'Total shots',
+    'S/Z': 'The average number of shots per match',
+    'SNB': 'The number of shots on goal',
+    'SNB/Z': 'The average number of shots on goal per match',
+    'SM': 'The number of shots missed',
+    'ChS': 'The number of catches',
+    'BS': 'The number of shots blocked',
+    'ÚS': 'The overall success rate of shooting',
+    'RÚS': 'Real success shooting',
+}
