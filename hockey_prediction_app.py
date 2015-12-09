@@ -1,16 +1,16 @@
 import sys
 import warnings
-from operator import itemgetter
 
-import requests
 from PyQt4 import QtGui
-from html_table_parser.parser import HTMLTableParser
-from lxml import html
-from pandas import DataFrame
+
+from data_utils import get_raw_data
+from formulas import FormulasRegistry
+from ui_utils import teams_combo_box, construct_tabs, WINDOW_HEIGHT, WINDOW_WIDTH
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
-data_url = 'http://www.hokej.cz/tipsport-extraliga/player-stats/detailni?stats-menu-section=shots&stats-filter-season=2015&stats-filter-competition=5574&do=stats-view-pager-all'
+players_data_url = 'http://www.hokej.cz/tipsport-extraliga/player-stats/detailni?stats-menu-section=shots&stats-filter-season=2015&stats-filter-competition=5574&do=stats-view-pager-all'
+matches_data_url = 'http://www.hokej.cz/tipsport-extraliga/zapasy?matchList-view-displayAll=1&matchList-filter-season=2015&matchList-filter-competition=5574'
 
 headers = {"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
            "Accept-Encoding": "gzip, deflate, sdch",
@@ -22,19 +22,13 @@ headers = {"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,imag
            "Upgrade-Insecure-Requests": "1",
            "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36", }
 
-WINDOW_WIDTH = 450
-WINDOW_HEIGHT = 550
-
-TABLE_HEIGHT = 400
-TABLE_WIDTH = 300
-
 
 class HockeyPredictionApp:
     def __init__(self):
         self.main_window = None
         self.main_layout = None
         self.tabs = None
-        self.data = None
+        self.data = []
         self.team1 = None
         self.team2 = None
 
@@ -45,7 +39,7 @@ class HockeyPredictionApp:
         self.main_window.resize(WINDOW_HEIGHT, WINDOW_WIDTH)
         self.main_window.setWindowTitle('Hockey probability app')
         self.main_layout = QtGui.QVBoxLayout()
-        raw_data = get_raw_data_for_prediction()
+        raw_data = get_raw_data(players_data_url, matches_data_url, headers)
         team_names = raw_data.get('Tým').unique()
         self.data = FormulasRegistry.get_processed_data_for_all_formulas(raw_data)
         team_combo_box_1 = teams_combo_box(team_names)
@@ -81,7 +75,7 @@ class HockeyPredictionApp:
 
     def filter_data_to_show(self):
         data_to_show = {}
-        for algorithm, teams_data in self.data.items():
+        for algorithm, teams_data in self.data:
             data_to_show[algorithm] = filter_teams(teams_data, self.team1, self.team2)
 
         return data_to_show
@@ -104,85 +98,6 @@ def filter_players_with_default_probability_threshold(players_probabilities):
 
     return result_players
 
-
-def get_raw_data_for_prediction():
-    response = requests.get(data_url, headers=headers)
-    doc = html.fromstring(response.text)
-    data_table_elements = doc.find_class('table-stats')
-    table_string = html.tostring(data_table_elements[0], encoding='utf-8').decode()
-    html_table_parser = HTMLTableParser()
-    html_table_parser.feed(table_string)
-    data_table = html_table_parser.tables[0]
-    return DataFrame(data_table[1:], columns=data_table[0]).convert_objects(convert_numeric=True)
-
-
-def teams_combo_box(teams_names):
-    combo_box = QtGui.QComboBox()
-    for team_name in teams_names:
-        combo_box.addItem(team_name)
-    return combo_box
-
-
-def make_table(data):
-    table = QtGui.QTableWidget()
-
-    table.resize(TABLE_HEIGHT, TABLE_WIDTH)
-    table.setColumnCount(2)
-
-    table.setHorizontalHeaderLabels(('Name', 'Probability'))
-
-    sorted_data = [(name, possibility) for name, possibility in data.items()]
-    sorted_data.sort(key=itemgetter(1), reverse=True)
-    for index, (name, possibility) in enumerate(sorted_data):
-        table.insertRow(index)
-        table.setItem(index, 0, QtGui.QTableWidgetItem(name))
-        table.setItem(index, 1, QtGui.QTableWidgetItem('%.2f %%' % possibility))
-
-    return table
-
-
-def construct_tabs(data):
-    tabs = QtGui.QTabWidget()
-    for tab_name, teams_data in data.items():
-        tab = QtGui.QWidget()
-        tab_layout = QtGui.QGridLayout()
-        for index, (team_name, players_probabilities) in enumerate(teams_data.items()):
-            tab_layout.addWidget(QtGui.QLabel(team_name), 0, index)
-            table = make_table(players_probabilities)
-            tab_layout.addWidget(table, 1, index)
-        tab.setLayout(tab_layout)
-        tabs.addTab(tab, tab_name)
-    return tabs
-
-
-class FormulasRegistry:
-    formulas = []
-
-    @staticmethod
-    def register_formula(formula_func):
-        FormulasRegistry.formulas.append(formula_func)
-        return formula_func
-
-    @staticmethod
-    def get_processed_data_for_all_formulas(raw_data):
-        result = {}
-        for formula_func in FormulasRegistry.formulas:
-            result[formula_func.__name__] = formula_func(raw_data)
-        return result
-
-
-@FormulasRegistry.register_formula
-def hits_count_mult_success_percent(raw_data):
-    multiplication_result = raw_data.get('S/Z') * raw_data.get('RÚS')
-    result_df = DataFrame({'Name': raw_data.get('Jméno'), 'Team': raw_data.get('Tým'),
-                           'Probability': multiplication_result})
-
-    result_dict = {}
-
-    for team, indexes in result_df.groupby('Team').groups.items():
-        result_dict[team] = result_df.loc[indexes, ['Name', 'Probability']].set_index('Name').to_dict()['Probability']
-
-    return result_dict
 
 if __name__ == '__main__':
     app = HockeyPredictionApp()
