@@ -39,19 +39,7 @@ data = {
     }
 }
 if __name__ == '__main__':
-    a = 'http://www.hokej.cz/tipsport-extraliga/zapasy?matchList-view-displayAll=1&matchList-filter-season=2015&matchList-filter-competition=5574'
 
-    import requests
-
-    headers = {"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-"Accept-Encoding": "gzip, deflate, sdch",
-"Accept-Language": "en-US,en;q=0.8,uk;q=0.6,ru;q=0.4",
-"Cache-Control": "max-age=0",
-"Connection": "keep-alive",
-"Cookie": "__gfp_64b=V7olMB1z1eHHz1PITzwE5Wc4548gu8NNKiDuhHfpYB3.J7; popupShown=true; scrollingDivDisabled=true; ibbid=BBID-01-01228999950496682; _gat=1; __utmt=1; __utmt_trac2=1; PHPSESSID=f84tqsoduqpjj3cc4gvjrrsjn0; nette-browser=anoda2xp6a; _ga=GA1.2.509669587.1449483158; __utma=47860542.509669587.1449483158.1449670439.1449676216.19; __utmb=47860542.12.10.1449676216; __utmc=47860542; __utmz=47860542.1449483158.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)",
-"Host": "www.hokej.cz",
-"Upgrade-Insecure-Requests": "1",
-"User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36",}
 
 
     df = get_players_data_from_matches_stats(a, headers)

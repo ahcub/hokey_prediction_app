@@ -12,15 +12,7 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 players_data_url = ''
 matches_data_url = ''
 
-headers = {"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-           "Accept-Encoding": "gzip, deflate, sdch",
-           "Accept-Language": "en-US,en;q=0.8,uk;q=0.6,ru;q=0.4",
-           "Cache-Control": "max-age=0",
-           "Connection": "keep-alive",
-           "Cookie": "bblpasync=1449584613947; bblosync=1449585458940; __gfp_64b=sGN1O8XUlhJbt4ZWEMs2RKkIqL7nbIkleQ1NtqNQzx..M7; ibbid=BBID-01-01242986113897072; PHPSESSID=0i2j9hv3h877a3tullca1vfie4; nette-browser=gnqmgg5fbu; _ga=GA1.2.834154638.1449584608; _gat=1; __utmt=1; __utmt_trac2=1; __utma=47860542.834154638.1449584608.1449584610.1449584608.1; __utmb=47860542.4.10.1449584610; __utmc=47860542; __utmz=47860542.1449584610.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); popupShown=true; scrollingDivDisabled=true",
-           "Host": "www.hokej.cz",
-           "Upgrade-Insecure-Requests": "1",
-           "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36", }
+headers = { }
 
 
 class HockeyPredictionApp:
