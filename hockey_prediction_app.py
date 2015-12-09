@@ -9,8 +9,8 @@ from ui_utils import teams_combo_box, construct_tabs, WINDOW_HEIGHT, WINDOW_WIDT
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
-players_data_url = 'http://www.hokej.cz/tipsport-extraliga/player-stats/detailni?stats-menu-section=shots&stats-filter-season=2015&stats-filter-competition=5574&do=stats-view-pager-all'
-matches_data_url = 'http://www.hokej.cz/tipsport-extraliga/zapasy?matchList-view-displayAll=1&matchList-filter-season=2015&matchList-filter-competition=5574'
+players_data_url = ''
+matches_data_url = ''
 
 headers = {"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
            "Accept-Encoding": "gzip, deflate, sdch",
