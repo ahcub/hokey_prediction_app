@@ -5,11 +5,13 @@ from datetime import datetime
 from os.path import dirname, join, isfile
 from urllib.parse import urljoin, urlparse, urlunparse
 
+import pandas as pd
 import requests
 from html_table_parser import HTMLTableParser
 from lxml import html
 from lxml.html import fromstring, tostring
-from pandas import DataFrame
+
+DATA_FILE = 'data.txt'
 
 
 def get_raw_data(players_data_url, matches_data_url, headers):
@@ -39,7 +41,7 @@ def get_players_data_from_matches_stats(matches_data_url, headers):
             else:
                 players_stat[player]['current_zero_result_streak'] += 1
 
-    return DataFrame.from_dict(players_stat, orient='index')
+    return pd.DataFrame.from_dict(players_stat, orient='index')
 
 
 def key_getter(item):
@@ -150,4 +152,37 @@ def get_players_data_by_their_stats(players_data_url, headers):
     html_table_parser = HTMLTableParser()
     html_table_parser.feed(table_string)
     data_table = html_table_parser.tables[0]
-    return DataFrame(data_table[1:], columns=data_table[0])
+    return pd.DataFrame(data_table[1:], columns=data_table[0])
+
+
+def get_players_tendencies(data):
+    data['tendency'] = 'no_change'
+    if isfile(DATA_FILE):
+        with open(DATA_FILE, encoding='utf-8') as data_file:
+            prev_data = literal_eval(data_file.read())
+            for row_index, data_series in data.iterrows():
+                player_stats = prev_data[data_series['Tým']][data_series['Jméno']]
+                value = player_stats['SNB/Z']
+                difference = data_series['SNB/Z'] - value
+                if difference:
+                    data.loc[row_index, 'tendency'] = 'up' if difference > 0.0 else 'down'
+                else:
+                    data.loc[row_index, 'tendency'] = player_stats['tendency']
+
+    return data
+
+
+def dump_player_stats(data):
+    result_dict = {}
+    for team, indexes in data.groupby('Tým').groups.items():
+        team_data_dicts = data.loc[indexes, ['Jméno', 'SNB/Z', 'tendency']].set_index('Jméno').to_dict()
+        team_result_dict = {}
+        for dict_name, dict_data in team_data_dicts.items():
+            for key, val in dict_data.items():
+                if key not in team_result_dict:
+                    team_result_dict[key] = {}
+                team_result_dict[key][dict_name] = val
+        result_dict[team] = team_result_dict
+
+    with open(DATA_FILE, 'w', encoding='utf-8') as data_file:
+        data_file.write(str(result_dict))

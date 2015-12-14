@@ -1,0 +1,14 @@
+This app implements next formulas for probability calculation
+
+1) hits_count_mult_success_percent
+    player_scoring_probability = ASN * SP
+    where
+    ASN: Average amount of shoots on goal
+    SP: Percent of successive shoots
+
+2) match_based_probabilities
+    player_scoring_probability = (GS / GP) * ZRS * 100
+    GS: number of games player scored
+    GP: number of games player played
+    ZRS: current amount of streak of games player didn't scored
+    100: percentage multiplier

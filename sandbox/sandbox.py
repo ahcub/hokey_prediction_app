@@ -1,3 +1,6 @@
+import sys
+from PyQt4 import QtGui
+
 data = {
     'hits_count_mult_success_percent': {
         'Team1':
@@ -53,7 +56,11 @@ def make_table(data):
 
     for index, (name, possibility) in enumerate(data.items()):
         table.insertRow(index)
-        table.setItem(index, 0, QtGui.QTableWidgetItem(name))
+        if index % 2:
+            table.setItem(index, 0, QtGui.QTableWidgetItem(QtGui.QIcon(r'D:\GitHub\hockey_prediction_app\down.png'), name))
+        else:
+
+            table.setItem(index, 0, QtGui.QTableWidgetItem(name))
         table.setItem(index, 1, QtGui.QTableWidgetItem(str(possibility)))
 
     return table
@@ -128,5 +135,7 @@ def main():
 
     tabs.setParent(None)
     main_layout.insertWidget(0, construct_tabs({'a': {}, 'b': {}}))
+    sys.exit(app.exec_())
 
-
+if __name__ == '__main__':
+    main()

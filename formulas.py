@@ -22,16 +22,9 @@ class FormulasRegistry:
 
 @FormulasRegistry.register_formula
 def hits_count_mult_success_percent(raw_data):
-    multiplication_result = raw_data.get('S/Z') * raw_data.get('RÚS')
-    result_df = DataFrame({'Name': raw_data.get('Jméno'), 'Team': raw_data.get('Tým'),
-                           'Probability': multiplication_result})
+    probability = raw_data.get('S/Z') * raw_data.get('RÚS')
 
-    result_dict = {}
-
-    for team, indexes in result_df.groupby('Team').groups.items():
-        result_dict[team] = result_df.loc[indexes, ['Name', 'Probability']].set_index('Name').to_dict()['Probability']
-
-    return result_dict
+    return data_to_return(raw_data, probability)
 
 
 @FormulasRegistry.register_formula
@@ -39,13 +32,24 @@ def match_based_probabilities(raw_data):
     probability = ((raw_data.get('games_scored') / raw_data.get('games_played')) *
                    raw_data.get('current_zero_result_streak')) * 100.0
 
+    return data_to_return(raw_data, probability)
+
+
+def data_to_return(raw_data, probability):
     result_df = DataFrame({'Name': raw_data.get('Jméno'), 'Team': raw_data.get('Tým'),
-                           'Probability': probability})
-
+                           'Probability': probability, 'tendency': raw_data.get('tendency')})
     result_dict = {}
-
     for team, indexes in result_df.groupby('Team').groups.items():
-        result_dict[team] = result_df.loc[indexes, ['Name', 'Probability']].set_index('Name').to_dict()['Probability']
+        team_data_dicts = result_df.loc[indexes, ['Name', 'Probability', 'tendency']].set_index('Name').to_dict()
+        team_result_dict = {}
+        for dict_name, dict_data in team_data_dicts.items():
+            for key, val in dict_data.items():
+                if key not in team_result_dict:
+                    team_result_dict[key] = {}
+                team_result_dict[key][dict_name] = val
 
-    print(result_dict)
+        result_dict[team] = team_result_dict
     return result_dict
+
+if __name__ == '__main__':
+    print(FormulasRegistry.formulas)

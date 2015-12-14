@@ -2,17 +2,19 @@ import sys
 import warnings
 
 from PyQt4 import QtGui
+from os.path import join, dirname
 
-from data_utils import get_raw_data
+from data_utils import get_raw_data, get_players_tendencies, dump_player_stats
 from formulas import FormulasRegistry
 from ui_utils import teams_combo_box, construct_tabs, WINDOW_HEIGHT, WINDOW_WIDTH
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 players_data_url = ''
+
 matches_data_url = ''
 
-headers = { }
+headers = {}
 
 
 class HockeyPredictionApp:
@@ -27,13 +29,15 @@ class HockeyPredictionApp:
     def start(self):
         app = QtGui.QApplication(sys.argv)
         self.main_window = QtGui.QWidget()
-
         self.main_window.resize(WINDOW_HEIGHT, WINDOW_WIDTH)
         self.main_window.setWindowTitle('Hockey probability app')
+        app.setWindowIcon(QtGui.QIcon(join(dirname(sys.argv[0]), 'hokey.png')))
         self.main_layout = QtGui.QVBoxLayout()
         raw_data = get_raw_data(players_data_url, matches_data_url, headers)
-        team_names = raw_data.get('Tým').unique()
-        self.data = FormulasRegistry.get_processed_data_for_all_formulas(raw_data)
+        raw_data_with_tendencies = get_players_tendencies(raw_data)
+        dump_player_stats(raw_data_with_tendencies)
+        team_names = raw_data_with_tendencies.get('Tým').unique()
+        self.data = FormulasRegistry.get_processed_data_for_all_formulas(raw_data_with_tendencies)
         team_combo_box_1 = teams_combo_box(team_names)
         team_combo_box_2 = teams_combo_box(team_names)
         team_combo_box_1.currentIndexChanged['QString'].connect(self.team_combo_box_callback('team1'))
@@ -84,14 +88,13 @@ def filter_teams(teams_data, *teams_filter):
 
 def filter_players_with_default_probability_threshold(players_probabilities):
     result_players = {}
-    for player, probability in players_probabilities.items():
-        if probability >= 15.0:
-            result_players[player] = probability
+    for player, stats in players_probabilities.items():
+        if stats['Probability'] >= 15.0:
+            result_players[player] = stats
 
     return result_players
 
 
 if __name__ == '__main__':
     app = HockeyPredictionApp()
-
     app.start()

@@ -42,8 +42,8 @@ if __name__ == '__main__':
 
 
 
-    df = get_players_data_from_matches_stats(a, headers)
-    print(df.to_dict())
+    # df = get_players_data_from_matches_stats(a, headers)
+    # print(df.to_dict())
     # print(df)
     # with open(r'D:\GitHub\hockey_prediction_app\sandbox\table_example.html', encoding='utf-8') as file_:
     #     s = file_.read()
@@ -99,14 +99,18 @@ if __name__ == '__main__':
     #             a = '%s %f | %s %f' % (table[1], scoring_probability, table[1], scoring_probability)
     #             print(a)
 
-    # with open('example.html', encoding='utf-8') as file_:
-    #     s = file_.read()
-    #     p = HTMLTableParser()
-    #     p.feed(s)
-    #     table_set = array([table[1:] for table_group in p.tables for table in table_group])
+    with open('table_example.html', encoding='utf-8') as file_:
+        s = file_.read()
+        p = HTMLTableParser()
+        p.feed(s)
+        table_set = array([table[1:] for table_group in p.tables for table in table_group])
     #
-    #     df = DataFrame(table_set[1:], columns=table_set[0])
-    #     df = df.convert_objects(convert_numeric=True)
+        df = DataFrame(table_set[1:], columns=table_set[0])
+        df = df.convert_objects(convert_numeric=True)
+        for row in df.iterrows():
+            row[1]['Tým'] = '1'
+
+        print(df.loc[0])
     #     # for team in df.get('Tým').unique():
     #     #     print(team)
     #     multiplication_result = df.get('S/Z') * df.get('RÚS')
