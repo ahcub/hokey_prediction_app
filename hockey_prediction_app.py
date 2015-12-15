@@ -1,8 +1,8 @@
 import sys
 import warnings
+from os.path import join, dirname
 
 from PyQt4 import QtGui
-from os.path import join, dirname
 
 from data_utils import get_raw_data, get_players_tendencies, dump_player_stats
 from formulas import FormulasRegistry
@@ -10,11 +10,24 @@ from ui_utils import teams_combo_box, construct_tabs, WINDOW_HEIGHT, WINDOW_WIDT
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
-players_data_url = ''
+players_data_url = [
+    'http://www.hokej.cz/tipsport-extraliga/player-stats/detailni?stats-menu-section=shots&stats-filter-season=2015&stats-filter-competition=5574&do=stats-view-pager-all',
+    'http://www.hokej.cz/tipsport-extraliga/player-stats/detailni?stats-menu-section=radegast&do=stats-view-pager-all',
+]
 
-matches_data_url = ''
+matches_data_url = 'http://www.hokej.cz/tipsport-extraliga/zapasy?matchList-view-displayAll=1&matchList-filter-season=2015&matchList-filter-competition=5574'
 
-headers = {}
+headers = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Encoding": "gzip, deflate, sdch",
+    "Accept-Language": "en-US,en;q=0.8,uk;q=0.6,ru;q=0.4",
+    "Cache-Control": "max-age=0",
+    "Connection": "keep-alive",
+    "Cookie": "bblpasync=1449584613947; bblosync=1449585458940; __gfp_64b=sGN1O8XUlhJbt4ZWEMs2RKkIqL7nbIkleQ1NtqNQzx..M7; ibbid=BBID-01-01242986113897072; PHPSESSID=0i2j9hv3h877a3tullca1vfie4; nette-browser=gnqmgg5fbu; _ga=GA1.2.834154638.1449584608; _gat=1; __utmt=1; __utmt_trac2=1; __utma=47860542.834154638.1449584608.1449584610.1449584608.1; __utmb=47860542.4.10.1449584610; __utmc=47860542; __utmz=47860542.1449584610.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); popupShown=true; scrollingDivDisabled=true",
+    "Host": "www.hokej.cz",
+    "Upgrade-Insecure-Requests": "1",
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36",
+}
 
 
 class HockeyPredictionApp:
@@ -79,11 +92,26 @@ class HockeyPredictionApp:
 
 def filter_teams(teams_data, *teams_filter):
     result_teams = {}
-    for team_name, players_probabilities in teams_data.items():
-        if team_name in teams_filter:
-            result_teams[team_name] = filter_players_with_default_probability_threshold(players_probabilities)
+    filtered_teams_data = {team_name: team_data for team_name, team_data in teams_data.items() if team_name in teams_filter}
+    team1, team2 = filtered_teams_data.keys()
+    enemy_name = {team1: team2, team2: team1}
+    for team_name, team_data in filtered_teams_data.items():
+        players_probabilities = modify_probabilities_with_team_stats(team_data['players_stats'],
+                                                                     team_data['team_stats'],
+                                                                     teams_data[enemy_name[team_name]]['team_stats'])
+        result_teams[team_name] = filter_players_with_default_probability_threshold(players_probabilities)
 
     return result_teams
+
+
+def modify_probabilities_with_team_stats(player_stats, ally_team_stats, enemy_team_stats):
+    if ally_team_stats and enemy_team_stats:
+        supply_value = ally_team_stats['help'] - enemy_team_stats['defence']
+
+        for player, stats in player_stats.items():
+            stats['Probability'] += supply_value
+
+    return player_stats
 
 
 def filter_players_with_default_probability_threshold(players_probabilities):

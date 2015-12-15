@@ -145,14 +145,28 @@ def get_match_players(html_page):
 
 
 def get_players_data_by_their_stats(players_data_url, headers):
-    response = requests.get(players_data_url, headers=headers)
-    doc = html.fromstring(response.text)
-    data_table_elements = doc.find_class('table-stats')
-    table_string = html.tostring(data_table_elements[0], encoding='utf-8').decode()
-    html_table_parser = HTMLTableParser()
-    html_table_parser.feed(table_string)
-    data_table = html_table_parser.tables[0]
-    return pd.DataFrame(data_table[1:], columns=data_table[0])
+    if isinstance(players_data_url, list):
+        urls_to_process = players_data_url
+    else:
+        urls_to_process = [players_data_url]
+
+    result_df = None
+    for url in urls_to_process:
+        response = requests.get(url, headers=headers)
+        doc = html.fromstring(response.text)
+        data_table_elements = doc.find_class('table-stats')
+        table_string = html.tostring(data_table_elements[0], encoding='utf-8').decode()
+        html_table_parser = HTMLTableParser()
+        html_table_parser.feed(table_string)
+        data_table = html_table_parser.tables[0]
+        df = pd.DataFrame(data_table[1:], columns=data_table[0])
+        # print(html_table_parser.tables)
+        if result_df is None:
+            result_df = df
+        else:
+            merge_on = ['Jméno', 'Tým', 'Z']
+            result_df = result_df.merge(df, left_on=merge_on, right_on=merge_on, )
+    return result_df
 
 
 def get_players_tendencies(data):
@@ -161,13 +175,14 @@ def get_players_tendencies(data):
         with open(DATA_FILE, encoding='utf-8') as data_file:
             prev_data = literal_eval(data_file.read())
             for row_index, data_series in data.iterrows():
-                player_stats = prev_data[data_series['Tým']][data_series['Jméno']]
-                value = player_stats['SNB/Z']
-                difference = data_series['SNB/Z'] - value
-                if difference:
-                    data.loc[row_index, 'tendency'] = 'up' if difference > 0.0 else 'down'
-                else:
-                    data.loc[row_index, 'tendency'] = player_stats['tendency']
+                if data_series['Tým'] in prev_data and data_series['Jméno'] in prev_data[data_series['Tým']]:
+                    player_stats = prev_data[data_series['Tým']][data_series['Jméno']]
+                    value = player_stats['SNB/Z']
+                    difference = data_series['SNB/Z'] - value
+                    if difference:
+                        data.loc[row_index, 'tendency'] = 'up' if difference > 0.0 else 'down'
+                    else:
+                        data.loc[row_index, 'tendency'] = player_stats['tendency']
 
     return data
 

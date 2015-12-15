@@ -107,10 +107,10 @@ if __name__ == '__main__':
     #
         df = DataFrame(table_set[1:], columns=table_set[0])
         df = df.convert_objects(convert_numeric=True)
-        for row in df.iterrows():
-            row[1]['Tým'] = '1'
-
-        print(df.loc[0])
+        df['ZS'] = 9
+        for team, indexes in df.groupby('Tým').groups.items():
+            team_data_set = df.loc[indexes, ['Z', 'ZS']]
+            print((team_data_set['ZS'] / team_data_set['Z']).sum())
     #     # for team in df.get('Tým').unique():
     #     #     print(team)
     #     multiplication_result = df.get('S/Z') * df.get('RÚS')
