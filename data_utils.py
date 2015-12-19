@@ -160,7 +160,6 @@ def get_players_data_by_their_stats(players_data_url, headers):
         html_table_parser.feed(table_string)
         data_table = html_table_parser.tables[0]
         df = pd.DataFrame(data_table[1:], columns=data_table[0])
-        # print(html_table_parser.tables)
         if result_df is None:
             result_df = df
         else:

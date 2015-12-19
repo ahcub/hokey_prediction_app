@@ -36,6 +36,15 @@ def match_based_probabilities(raw_data):
 
 
 @FormulasRegistry.register_formula
+def mean_of_goals_and_shoots(raw_data):
+    c1 = (raw_data.get('G') / raw_data.get('Z')) * 100
+    c2 = (raw_data.get('SNB') / raw_data.get('CPS')) * 100
+    probability = (c1 + c2) / 2
+
+    return data_to_return(raw_data, probability)
+
+
+@FormulasRegistry.register_formula
 def player_stat_with_teams_factor(raw_data):
     probability = raw_data.get('S/Z') * raw_data.get('RÚS')
 
