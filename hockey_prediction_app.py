@@ -38,6 +38,7 @@ class HockeyPredictionApp:
         self.data = []
         self.team1 = None
         self.team2 = None
+        self.teams_updated_with_stats = set()
 
     def start(self):
         app = QtGui.QApplication(sys.argv)
@@ -85,23 +86,25 @@ class HockeyPredictionApp:
     def filter_data_to_show(self):
         data_to_show = {}
         for algorithm, teams_data in self.data:
-            data_to_show[algorithm] = filter_teams(teams_data, self.team1, self.team2)
+            data_to_show[algorithm] = self.filter_teams(teams_data, self.team1, self.team2)
 
         return data_to_show
 
-
-def filter_teams(teams_data, *teams_filter):
-    result_teams = {}
-    filtered_teams_data = {team_name: team_data for team_name, team_data in teams_data.items() if team_name in teams_filter}
-    team1, team2 = filtered_teams_data.keys()
-    enemy_name = {team1: team2, team2: team1}
-    for team_name, team_data in filtered_teams_data.items():
-        players_probabilities = modify_probabilities_with_team_stats(team_data['players_stats'],
-                                                                     team_data['team_stats'],
-                                                                     teams_data[enemy_name[team_name]]['team_stats'])
-        result_teams[team_name] = filter_players_with_default_probability_threshold(players_probabilities)
-
-    return result_teams
+    def filter_teams(self, teams_data, *teams_filter):
+        result_teams = {}
+        filtered_teams_data = {team_name: team_data for team_name, team_data in teams_data.items() if team_name in teams_filter}
+        team1, team2 = filtered_teams_data.keys()
+        enemy_name = {team1: team2, team2: team1}
+        for team_name, team_data in filtered_teams_data.items():
+            if team_name not in self.teams_updated_with_stats:
+                players_probabilities = modify_probabilities_with_team_stats(team_data['players_stats'],
+                                                                             team_data['team_stats'],
+                                                                             teams_data[enemy_name[team_name]]['team_stats'])
+            else:
+                players_probabilities = team_data['players_stats']
+            result_teams[team_name] = filter_players_with_default_probability_threshold(players_probabilities)
+            self.teams_updated_with_stats.add(team_name)
+        return result_teams
 
 
 def modify_probabilities_with_team_stats(player_stats, ally_team_stats, enemy_team_stats):
