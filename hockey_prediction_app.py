@@ -1,5 +1,6 @@
 import sys
 import warnings
+from copy import deepcopy
 from os.path import join, dirname
 
 from PyQt4 import QtGui
@@ -38,7 +39,6 @@ class HockeyPredictionApp:
         self.data = []
         self.team1 = None
         self.team2 = None
-        self.teams_updated_with_stats = set()
 
     def start(self):
         app = QtGui.QApplication(sys.argv)
@@ -96,25 +96,22 @@ class HockeyPredictionApp:
         team1, team2 = filtered_teams_data.keys()
         enemy_name = {team1: team2, team2: team1}
         for team_name, team_data in filtered_teams_data.items():
-            if team_name not in self.teams_updated_with_stats:
-                players_probabilities = modify_probabilities_with_team_stats(team_data['players_stats'],
-                                                                             team_data['team_stats'],
-                                                                             teams_data[enemy_name[team_name]]['team_stats'])
-            else:
-                players_probabilities = team_data['players_stats']
+            players_probabilities = modify_probabilities_with_team_stats(team_data['players_stats'],
+                                                                         team_data['team_stats'],
+                                                                         teams_data[enemy_name[team_name]]['team_stats'])
             result_teams[team_name] = filter_players_with_default_probability_threshold(players_probabilities)
-            self.teams_updated_with_stats.add(team_name)
         return result_teams
 
 
 def modify_probabilities_with_team_stats(player_stats, ally_team_stats, enemy_team_stats):
+    result_player_stats = deepcopy(player_stats)
     if ally_team_stats and enemy_team_stats:
         supply_value = ally_team_stats['help'] - enemy_team_stats['defence']
 
-        for player, stats in player_stats.items():
+        for player, stats in result_player_stats.items():
             stats['Probability'] += supply_value
 
-    return player_stats
+    return result_player_stats
 
 
 def filter_players_with_default_probability_threshold(players_probabilities):
